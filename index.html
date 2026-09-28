@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Control Office Dashboard</title>
+<style>
+:root{
+  --bg:#0c0d0f; --panel:#17181b; --panel2:#1e2023; --line:#2b2d31;
+  --text:#f2f2f3; --muted:#93969c; --green:#22c55e; --red:#ef4444; --yellow:#eab308;
+  --green-bg:rgba(34,197,94,.14); --red-bg:rgba(239,68,68,.14); --yellow-bg:rgba(234,179,8,.14);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+a{color:inherit}
+.app{display:flex;min-height:100vh}
+/* Sidebar */
+.sidebar{width:230px;flex:0 0 230px;background:#0a0b0c;border-right:1px solid var(--line);
+  padding:18px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.brand-text b{display:block;font-size:14px}
+.brand-text span{display:block;font-size:11px;color:var(--muted)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--muted);
+  font-size:13.5px;cursor:pointer;margin-bottom:2px;border:1px solid transparent}
+.nav-item svg{width:16px;height:16px;flex:0 0 16px}
+.nav-item:hover{background:var(--panel2);color:var(--text)}
+.nav-item.active{background:var(--panel2);color:var(--text);border-color:var(--line)}
+.nav-item.active .bar{display:block}
+.menu-btn{display:none;background:none;border:1px solid var(--line);color:var(--text);
+  width:38px;height:38px;border-radius:8px;font-size:18px;cursor:pointer;flex-shrink:0;
+  align-items:center;justify-content:center}
+.scrim{display:none}
+/* Main */
+.main{flex:1;min-width:0;padding:22px 26px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.topbar .tb-left{display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:19px;margin:0}
+.topbar .sub{color:var(--muted);font-size:12.5px;margin-top:3px}
+.live{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);background:var(--panel);
+  border:1px solid var(--line);padding:6px 12px;border-radius:20px}
+.live .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+/* Cards */
+.cards{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;margin-bottom:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card .n{font-size:24px;font-weight:700}
+.card .l{font-size:11.5px;color:var(--muted);margin-top:2px}
+.card.g .n{color:var(--green)} .card.r .n{color:var(--red)} .card.y .n{color:var(--yellow)}
+/* Panels */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:18px}
+.panel h2{font-size:15px;margin:0 0 12px}
+.panel-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+select,input[type=text],input[type=datetime-local]{background:#0e0f11;border:1px solid var(--line);color:var(--text);
+  padding:7px 10px;border-radius:7px;font-size:12.5px}
+button{cursor:pointer;font-family:inherit}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:7px 12px;border-radius:7px;font-size:12.5px}
+.btn:hover{border-color:#3a3d42}
+.btn.primary{background:#fff;color:#0c0d0f;border-color:#fff;font-weight:600}
+.btn.small{padding:4px 9px;font-size:11.5px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.03em;
+  padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #202226;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge.green{background:var(--green-bg);color:var(--green)}
+.badge.red{background:var(--red-bg);color:var(--red)}
+.badge.yellow{background:var(--yellow-bg);color:var(--yellow)}
+.prio-High{color:var(--red);font-weight:600}
+.prio-Medium{color:var(--yellow);font-weight:600}
+.prio-Low{color:var(--green);font-weight:600}
+.section{display:none}
+.section.active{display:block}
+.mono{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Chat */
+.chat-wrap{display:grid;grid-template-columns:200px 1fr;gap:14px;height:420px}
+.chat-list{border-right:1px solid var(--line);padding-right:10px;overflow-y:auto}
+.chat-contact{padding:9px 8px;border-radius:8px;font-size:12.5px;cursor:pointer;margin-bottom:3px;display:flex;justify-content:space-between}
+.chat-contact.active{background:var(--panel2)}
+.chat-contact .tag{color:var(--muted);font-size:10.5px}
+.chat-body{display:flex;flex-direction:column;min-width:0}
+.msgs{flex:1;overflow-y:auto;padding:6px 4px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:70%;padding:8px 11px;border-radius:10px;font-size:12.5px;line-height:1.4}
+.msg.in{background:var(--panel2);align-self:flex-start}
+.msg.out{background:#2a3a2f;align-self:flex-end}
+.msg .meta{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.chat-input{display:flex;gap:8px;margin-top:10px}
+.chat-input input{flex:1;min-width:0}
+.notif{display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #202226;font-size:12px}
+.notif:last-child{border-bottom:none}
+.notif .d{width:7px;height:7px;border-radius:50%;margin-top:5px;flex:0 0 7px}
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;width:100%;max-width:340px}
+.modal h3{margin:0 0 4px;font-size:15px}
+.modal .id{color:var(--muted);font-size:12px;margin-bottom:14px}
+.modal label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;margin-top:12px}
+.modal input{width:100%}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
+.filters{display:flex;gap:10px;flex-wrap:wrap}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#2c2e32;border-radius:4px}
+@media(max-width:1100px){.cards{grid-template-columns:repeat(4,1fr)}.grid2{grid-template-columns:1fr}}
+@media(max-width:760px){
+  .menu-btn{display:flex}
+  .sidebar{position:fixed;top:0;left:0;height:100%;width:250px;transform:translateX(-100%);
+    transition:transform .25s ease;z-index:45;box-shadow:2px 0 24px rgba(0,0,0,.5)}
+  body.nav-open .sidebar{transform:translateX(0)}
+  body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40}
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .main{padding:16px 14px 40px}
+  .topbar h1{font-size:17px}
+  .chat-wrap{grid-template-columns:1fr;height:auto}
+  .chat-list{border-right:none;border-bottom:1px solid var(--line);padding-right:0;padding-bottom:10px;margin-bottom:10px;max-height:140px}
+  .msgs{max-height:280px}
+}
+@media(max-width:420px){
+  .cards{grid-template-columns:1fr}
+  .card{padding:11px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="dot"></span>
+      <div class="brand-text"><b>Control Office</b><span>Southern Railway · Live</span></div>
+    </div>
+    <div id="navList"></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="tb-left">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
+        <div><h1 id="pageTitle">Dashboard</h1><div class="sub" id="pageSub">Centralized monitoring across all divisions</div></div>
+      </div>
+      <div class="live"><span class="pulse"></span> Control room feed active</div>
+    </div>
+
+    <div class="cards" id="summaryCards"></div>
+
+    <!-- DASHBOARD -->
+    <section class="section" id="sec-dashboard">
+      <div class="grid2">
+        <div class="panel">
+          <h2>AI Suggested Work — All Divisions</h2>
+          <div style="overflow-x:auto"><table><thead><tr><th>Division</th><th>Work</th><th>Priority</th><th>Location</th><th>Suggested</th><th>Status</th></tr></thead>
+          <tbody id="aiTablePreview"></tbody></table></div>
+        </div>
+        <div class="panel">
+          <h2>Approval Snapshot</h2>
+          <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>Division</th><th>Station Master</th><th>Division Office</th></tr></thead>
+          <tbody id="approvalPreview"></tbody></table></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Recent Notifications</h2>
+        <div id="notifList"></div>
+      </div>
+    </section>
+
+    <!-- ALL DIVISIONS -->
+    <section class="section" id="sec-divisions">
+      <div class="panel">
+        <h2>Junction-to-Junction</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>From Junction</th><th>To Junction</th><th>Section</th><th>Division</th></tr></thead>
+        <tbody id="junctionTable"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h2>Station-to-Station</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>From Station</th><th>To Station</th><th>Division</th></tr></thead>
+        <tbody id="stationTable"></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h2>Work Location</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>ID</th><th>KM from Junction</th><th>Work Location</th><th>Division</th><th>Date</th></tr></thead>
+        <tbody id="kmTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- AI SUGGESTED WORK -->
+    <section class="section" id="sec-ai">
+      <div class="panel">
+        <h2>AI Suggested Work — All Divisions</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>Division</th><th>Work Details</th><th>Priority</th><th>Location</th><th>Suggested Date/Time</th><th>Status</th></tr></thead>
+        <tbody id="aiTableFull"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- CURRENT REQUESTS -->
+    <section class="section" id="sec-requests">
+      <div class="panel">
+        <div class="panel-row">
+          <h2 style="margin:0">Current Requests — All Divisions</h2>
+          <div class="filters">
+            <select id="filterDivision"><option value="">All Divisions</option></select>
+            <select id="filterStatus"><option value="">All Statuses</option></select>
+          </div>
+        </div>
+        <div style="overflow-x:auto"><table><thead><tr><th>Req ID</th><th>Division</th><th>Work Details</th><th>Location</th><th>Date/Time</th><th>Status</th></tr></thead>
+        <tbody id="reqTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- APPROVALS -->
+    <section class="section" id="sec-approvals">
+      <div class="panel">
+        <h2>Approval Status</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>Req ID</th><th>Division</th><th>Work Details</th><th>Station Master</th><th>Division Office</th></tr></thead>
+        <tbody id="approvalTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- WORKER STATUS -->
+    <section class="section" id="sec-worker">
+      <div class="panel">
+        <h2>Worker Status</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>Req ID</th><th>Division</th><th>Work Details</th><th>Worker Status</th><th>Acceptance</th><th>Reporting Time</th></tr></thead>
+        <tbody id="workerTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- RESCHEDULE -->
+    <section class="section" id="sec-reschedule">
+      <div class="panel">
+        <h2>Reschedule Work Requests</h2>
+        <div style="overflow-x:auto"><table><thead><tr><th>Req ID</th><th>Division</th><th>Work Details</th><th>Current Date/Time</th><th>Reschedule Status</th><th></th></tr></thead>
+        <tbody id="rescheduleTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- COMMUNICATION -->
+    <section class="section" id="sec-comm">
+      <div class="grid2">
+        <div class="panel">
+          <h2>Communication</h2>
+          <div class="chat-wrap">
+            <div class="chat-list" id="chatContacts"></div>
+            <div class="chat-body">
+              <div class="msgs" id="chatMsgs"></div>
+              <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Type a message...">
+                <button class="btn primary" id="chatSend">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Notifications</h2>
+          <div id="notifListFull"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3>Reschedule Work</h3>
+    <div class="id" id="modalId"></div>
+    <label>New Date &amp; Time</label>
+    <input type="datetime-local" id="modalDateTime">
+    <div class="modal-actions">
+      <button class="btn" id="modalCancel">Cancel</button>
+      <button class="btn primary" id="modalConfirm">Confirm Reschedule</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DIVISIONS = ["Chennai","Trichy","Madurai","Salem","Palakkad","Thiruvananthapuram"];
+const icons = {
+  dashboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>',
+  divisions:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg>',
+  ai:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l1.6 4.8L18 8l-4.4 1.2L12 14l-1.6-4.8L6 8l4.4-1.2z"/><path d="M19 15l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg>',
+  requests:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h6M9 8h6"/><rect x="4" y="3" width="16" height="18" rx="2"/></svg>',
+  approvals:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>',
+  worker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/></svg>',
+  reschedule:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  comm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 01-8.9 8.4 9 9 0 01-3.3-.6L3 21l1.8-5.4A8.4 8.4 0 1121 11.5z"/></svg>'
+};
+const NAV = [
+  {id:'dashboard',label:'Dashboard'},
+  {id:'divisions',label:'All Divisions'},
+  {id:'ai',label:'AI Suggested Work'},
+  {id:'requests',label:'Current Requests'},
+  {id:'approvals',label:'Approvals'},
+  {id:'worker',label:'Worker Status'},
+  {id:'reschedule',label:'Reschedule'},
+  {id:'comm',label:'Communication'}
+];
+
+function id(n){return 'WR-'+String(n).padStart(4,'0')}
+function pick(arr,i){return arr[i%arr.length]}
+
+const JUNCTIONS = [["Arakkonam Jn","Katpadi Jn"],["Villupuram Jn","Vriddhachalam Jn"],["Erode Jn","Salem Jn"],["Podanur Jn","Palakkad Jn"],["Tiruchchirappalli Jn","Karur Jn"],["Kollam Jn","Ernakulam Jn"]];
+const SECTIONS = ["Arakkonam-Katpadi","Villupuram-Vriddhachalam","Erode-Salem","Podanur-Palakkad","Trichy-Karur","Kollam-Ernakulam"];
+const STATIONS = [["Chennai Central","Perambur"],["Trichy Jn","Srirangam"],["Madurai Jn","Tirumangalam"],["Salem Jn","Omalur"],["Palakkad Jn","Olavakkode"],["Thiruvananthapuram Central","Kochuveli"]];
+const WORK = ["Rail fracture repair","Track ballast renewal","OHE wire inspection","Points & crossing maintenance","Girder bridge inspection","Track fastening replacement","Signal cable fault check","Rail welding (thermit)","Level crossing gate repair","Formation drainage clearance"];
+const PRIOR = ["High","Medium","Low"];
+const AISTAT = ["Approved","Not Approved"];
+const REQSTAT = ["Open","In Progress","Scheduled","Closed"];
+
+let data = [];
+for(let i=1;i<=16;i++){
+  const div = pick(DIVISIONS,i);
+  const jn = pick(JUNCTIONS,i);
+  const st = pick(STATIONS,i);
+  const approvals = [["approved","approved"],["pending","pending"],["approved","rejected"],["rejected","pending"],["approved","pending"]][i%5];
+  const workerOpt = [ {a:true,t:"08:42"}, {a:false,t:"—"}, {a:null,t:"—"} ][i%3];
+  const durHrs = 2 + (i%3);
+  const startISO = `2026-09-${(24+ (i%4)).toString().padStart(2,'0')}T${(6+i%12).toString().padStart(2,'0')}:00`;
+  const endISO = new Date(new Date(startISO).getTime() + durHrs*3600000).toISOString();
+  data.push({
+    reqId:id(i), division:div, work:pick(WORK,i), priority:pick(PRIOR,i), location:`Section KM ${120+i*3}`,
+    fromJunction:jn[0], toJunction:jn[1], section:SECTIONS[i%SECTIONS.length],
+    fromStation:st[0], toStation:st[1], km:(120+i*3.2).toFixed(1)+" km",
+    dateTime:startISO, endDateTime:endISO,
+    source: i%3===0 ? 'Manual' : 'AI',
+    aiStatus: pick(AISTAT,i), reqStatus: pick(REQSTAT,i),
+    approval:{sm:approvals[0], div:approvals[1]},
+    worker: workerOpt,
+    reschedule:{done:i%5===0, newDT:null}
+  });
+}
+
+function badge(status){
+  const map = {approved:'green',rejected:'red',pending:'yellow'};
+  const label = {approved:'Approved',rejected:'Not Approved',pending:'Waiting'}[status];
+  return `<span class="badge ${map[status]}">${label}</span>`;
+}
+function fmtDT(s){ return new Date(s).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+function fmtDateOnly(s){ return new Date(s).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtTimeOnly(s){ return new Date(s).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
+
+// Worker Status: restricted to Processing / Closed / Open / Not Approved / Waiting
+function workerStatusInfo(r){
+  if(r.approval.sm==='rejected' || r.approval.div==='rejected') return ['red','Not Approved'];
+  if(r.approval.sm==='pending' || r.approval.div==='pending') return ['yellow','Waiting'];
+  if(r.reqStatus==='Closed') return ['green','Closed'];
+  if(r.reqStatus==='Open') return ['yellow','Open'];
+  return ['yellow','Processing']; // In Progress / Scheduled
+}
+// Acceptance: Approved / Not Approved / Waiting
+function acceptanceBadge(r){
+  const key = r.worker.a===true ? 'approved' : r.worker.a===false ? 'rejected' : 'pending';
+  return badge(key);
+}
+
+function renderNav(){
+  const el = document.getElementById('navList');
+  el.innerHTML = NAV.map(n=>`<div class="nav-item" data-tab="${n.id}">${icons[n.id]}<span>${n.label}</span></div>`).join('');
+  el.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>{go(n.dataset.tab); closeNav();}));
+}
+function openNav(){ document.body.classList.add('nav-open'); }
+function closeNav(){ document.body.classList.remove('nav-open'); }
+document.getElementById('menuBtn').addEventListener('click', openNav);
+document.getElementById('scrim').addEventListener('click', closeNav);
+
+function go(tab){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+tab).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.tab===tab));
+  document.getElementById('pageTitle').textContent = NAV.find(n=>n.id===tab).label;
+  const subs = {dashboard:'Centralized monitoring across all divisions',divisions:'Junctions, stations and work-location detail by division',
+    ai:'Machine-recommended maintenance across every division',requests:'All active work requests with division and status filters',
+    approvals:'Station Master and Division Office sign-off',worker:'Field worker status, acceptance and reporting time',
+    reschedule:'Move a work request to a new date and time',comm:'Talk to Station Masters, Division Control and field workers'};
+  document.getElementById('pageSub').textContent = subs[tab];
+}
+
+function renderCards(){
+  const total = data.length;
+  const ai = data.filter(d=>d.source==='AI').length;
+  const approved = data.filter(d=>d.approval.sm==='approved'&&d.approval.div==='approved').length;
+  const notApproved = data.filter(d=>d.approval.sm==='rejected'||d.approval.div==='rejected').length;
+  const workerAcc = data.filter(d=>d.worker.a===true).length;
+  const resched = data.filter(d=>d.reschedule.done).length;
+  const cards = [
+    {n:DIVISIONS.length,l:'Total Divisions'},
+    {n:total,l:'Current Requests'},
+    {n:ai,l:'AI Suggested Works'},
+    {n:approved,l:'Approved Requests',c:'g'},
+    {n:notApproved,l:'Not Approved',c:'r'},
+    {n:workerAcc,l:'Worker Accepted'},
+    {n:resched,l:'Rescheduled Works',c:'y'}
+  ];
+  document.getElementById('summaryCards').innerHTML = cards.map(c=>`<div class="card ${c.c||''}"><div class="n">${c.n}</div><div class="l">${c.l}</div></div>`).join('');
+}
+
+function renderAI(){
+  const rows = data.filter(d=>d.source==='AI');
+  const statMap = {Approved:'green','Not Approved':'red'};
+  const rowHtml = r=>`<tr><td>${r.division}</td><td>${r.work}</td><td class="prio-${r.priority}">${r.priority}</td><td>${r.location}</td><td class="mono">${fmtDT(r.dateTime)}</td><td><span class="badge ${statMap[r.aiStatus]}">${r.aiStatus}</span></td></tr>`;
+  document.getElementById('aiTablePreview').innerHTML = rows.slice(0,5).map(rowHtml).join('');
+  document.getElementById('aiTableFull').innerHTML = rows.map(rowHtml).join('');
+}
+
+function renderDivisions(){
+  document.getElementById('junctionTable').innerHTML = data.map(r=>`<tr><td>${r.fromJunction}</td><td>${r.toJunction}</td><td>${r.section}</td><td>${r.division}</td></tr>`).join('');
+  document.getElementById('stationTable').innerHTML = data.map(r=>`<tr><td>${r.fromStation}</td><td>${r.toStation}</td><td>${r.division}</td></tr>`).join('');
+  document.getElementById('kmTable').innerHTML = data.map(r=>`<tr><td>${r.reqId}</td><td class="mono">${r.km}</td><td>${r.location}</td><td>${r.division}</td><td class="mono">${fmtDT(r.dateTime)}</td></tr>`).join('');
+}
+
+function renderRequests(){
+  const selDiv = document.getElementById('filterDivision').value;
+  const selStat = document.getElementById('filterStatus').value;
+  const rows = data.filter(r=>(!selDiv||r.division===selDiv)&&(!selStat||r.reqStatus===selStat));
+  document.getElementById('reqTable').innerHTML = rows.map(r=>`<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${r.work}</td><td>${r.location}</td><td class="mono">${fmtDT(r.dateTime)}</td><td>${r.reqStatus}</td></tr>`).join('') || `<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px">No requests match these filters</td></tr>`;
+}
+function setupFilters(){
+  const fd = document.getElementById('filterDivision'); const fs = document.getElementById('filterStatus');
+  fd.innerHTML += DIVISIONS.map(d=>`<option value="${d}">${d}</option>`).join('');
+  fs.innerHTML += REQSTAT.map(s=>`<option value="${s}">${s}</option>`).join('');
+  fd.addEventListener('change',renderRequests); fs.addEventListener('change',renderRequests);
+}
+
+function renderApprovals(){
+  const rowHtml = r=>`<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${r.work}</td><td>${badge(r.approval.sm)}</td><td>${badge(r.approval.div)}</td></tr>`;
+  document.getElementById('approvalTable').innerHTML = data.map(rowHtml).join('');
+  document.getElementById('approvalPreview').innerHTML = data.slice(0,6).map(r=>`<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${badge(r.approval.sm)}</td><td>${badge(r.approval.div)}</td></tr>`).join('');
+}
+
+function renderWorker(){
+  document.getElementById('workerTable').innerHTML = data.map(r=>{
+    const [c,l] = workerStatusInfo(r);
+    const reporting = `${fmtDateOnly(r.dateTime)}<br><span class="mono">${fmtTimeOnly(r.dateTime)} – ${fmtTimeOnly(r.endDateTime)}</span>`;
+    return `<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${r.work}</td><td><span class="badge ${c}">${l}</span></td><td>${acceptanceBadge(r)}</td><td>${reporting}</td></tr>`;
+  }).join('');
+}
+
+let activeReschedId = null;
+function renderReschedule(){
+  document.getElementById('rescheduleTable').innerHTML = data.map(r=>{
+    const status = r.reschedule.done ? `<span class="badge yellow">Rescheduled → ${fmtDT(r.reschedule.newDT||r.dateTime)}</span>` : `<span class="badge green">On Original Schedule</span>`;
+    return `<tr><td class="mono">${r.reqId}</td><td>${r.division}</td><td>${r.work}</td><td class="mono">${fmtDT(r.dateTime)}</td><td>${status}</td><td><button class="btn small" data-id="${r.reqId}">Reschedule</button></td></tr>`;
+  }).join('');
+  document.querySelectorAll('#rescheduleTable button').forEach(b=>b.addEventListener('click',()=>openModal(b.dataset.id)));
+}
+function openModal(reqId){
+  activeReschedId = reqId;
+  document.getElementById('modalId').textContent = reqId;
+  document.getElementById('modalDateTime').value = '';
+  document.getElementById('overlay').classList.add('show');
+}
+document.getElementById('modalCancel').addEventListener('click',()=>document.getElementById('overlay').classList.remove('show'));
+document.getElementById('modalConfirm').addEventListener('click',()=>{
+  const val = document.getElementById('modalDateTime').value;
+  if(!val){ return; }
+  const rec = data.find(d=>d.reqId===activeReschedId);
+  rec.reschedule.done = true; rec.reschedule.newDT = val;
+  document.getElementById('overlay').classList.remove('show');
+  renderReschedule(); renderCards();
+});
+
+const notifications = [
+  {c:'green',t:'Station Master (Chennai) approved WR-0002 — Track ballast renewal'},
+  {c:'red',t:'Division Office (Salem) rejected WR-0004 — pending revised plan'},
+  {c:'yellow',t:'Worker acceptance awaited for WR-0011, Trichy Division'},
+  {c:'green',t:'WR-0006 marked complete by field crew, Madurai Division'},
+  {c:'yellow',t:'AI flagged high-priority rail fracture near Palakkad Jn'}
+];
+function renderNotifs(){
+  const html = notifications.map(n=>`<div class="notif"><span class="d" style="background:var(--${n.c})"></span><span>${n.t}</span></div>`).join('');
+  document.getElementById('notifList').innerHTML = html;
+  document.getElementById('notifListFull').innerHTML = html;
+}
+
+const contacts = [
+  {id:'sm', name:'Station Master', tag:'Chennai Central'},
+  {id:'do', name:'Division Control', tag:'Chennai Division'},
+  {id:'wk', name:'Field Worker', tag:'Team 4 — Track'}
+];
+const chatSeed = {
+  sm:[{dir:'in',t:'Track inspection at KM 132 completed.',time:'09:12'},{dir:'out',t:'Noted, please share the report by noon.',time:'09:14'}],
+  do:[{dir:'in',t:'Requesting engine block for WR-0009 tomorrow.',time:'08:40'},{dir:'out',t:'Approved, block confirmed 02:00–04:00.',time:'08:55'}],
+  wk:[{dir:'in',t:'Reached site, starting rail welding job.',time:'07:30'}]
+};
+let activeChat = 'sm';
+function renderContacts(){
+  document.getElementById('chatContacts').innerHTML = contacts.map(c=>`<div class="chat-contact ${c.id===activeChat?'active':''}" data-id="${c.id}"><span>${c.name}</span></div><div class="tag" style="margin:-4px 0 6px 8px">${c.tag}</div>`).join('');
+  document.querySelectorAll('.chat-contact').forEach(el=>el.addEventListener('click',()=>{activeChat=el.dataset.id;renderContacts();renderMsgs();}));
+}
+function renderMsgs(){
+  document.getElementById('chatMsgs').innerHTML = chatSeed[activeChat].map(m=>`<div class="msg ${m.dir}">${m.t}<span class="meta">${m.time}</span></div>`).join('');
+}
+document.getElementById('chatSend').addEventListener('click',sendMsg);
+document.getElementById('chatInput').addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg();});
+function sendMsg(){
+  const inp = document.getElementById('chatInput');
+  if(!inp.value.trim()) return;
+  chatSeed[activeChat].push({dir:'out',t:inp.value.trim(),time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  inp.value=''; renderMsgs();
+  document.getElementById('chatMsgs').scrollTop = 9999;
+}
+
+function renderAll(){
+  renderCards(); renderAI(); renderDivisions(); renderRequests(); renderApprovals(); renderWorker(); renderReschedule(); renderNotifs(); renderContacts(); renderMsgs();
+}
+renderNav(); setupFilters(); renderAll(); go('dashboard');
+</script>
+</body>
+</html>
